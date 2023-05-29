@@ -48,6 +48,9 @@ const (
 	WechatPaySignature = "Wechatpay-Signature" // 微信支付回包签名信息
 	WechatPaySerial    = "Wechatpay-Serial"    // 微信支付回包平台序列号
 	RequestID          = "Request-Id"          // 微信支付回包请求ID
+
+	WechatPayIgnoreTimestamp = "Wechatpay-Ignore-Timestamp"
+	IgnoreTimestampVal       = "YES"
 )
 
 // 时间相关常量

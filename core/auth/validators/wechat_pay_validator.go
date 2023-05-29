@@ -20,11 +20,12 @@ type wechatPayValidator struct {
 }
 
 type wechatPayHeader struct {
-	RequestID string
-	Serial    string
-	Signature string
-	Nonce     string
-	Timestamp int64
+	RequestID       string
+	Serial          string
+	Signature       string
+	Nonce           string
+	Timestamp       int64
+	IgnoreTimestamp bool
 }
 
 func (v *wechatPayValidator) validateHTTPMessage(ctx context.Context, header http.Header, body []byte) error {
@@ -57,6 +58,7 @@ func getWechatPayHeader(ctx context.Context, header http.Header) (wechatPayHeade
 	_ = ctx // Suppressing warnings
 
 	requestID := strings.TrimSpace(header.Get(consts.RequestID))
+	ignoreTimestamp := strings.TrimSpace(header.Get(consts.WechatPayIgnoreTimestamp))
 
 	getHeaderString := func(key string) (string, error) {
 		val := strings.TrimSpace(header.Get(key))
@@ -99,18 +101,22 @@ func getWechatPayHeader(ctx context.Context, header http.Header) (wechatPayHeade
 		return ret, err
 	}
 
+	if ignoreTimestamp == consts.IgnoreTimestampVal {
+		ret.IgnoreTimestamp = true
+	}
+
 	return ret, nil
 }
 
 // checkWechatPayHeader 对 wechatPayHeader 内容进行检查，看是否符合要求
 //
 // 检查项：
-//  - Timestamp 与当前时间之差不得超过 FiveMinute;
+//   - Timestamp 与当前时间之差不得超过 FiveMinute;
 func checkWechatPayHeader(ctx context.Context, args wechatPayHeader) error {
 	// Suppressing warnings
 	_ = ctx
 
-	if math.Abs(float64(time.Now().Unix()-args.Timestamp)) >= consts.FiveMinute {
+	if !args.IgnoreTimestamp && math.Abs(float64(time.Now().Unix()-args.Timestamp)) >= consts.FiveMinute {
 		return fmt.Errorf("timestamp=[%d] expires, request-id=[%s]", args.Timestamp, args.RequestID)
 	}
 	return nil
